@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neuralnetworkapp"
+version = "0.1.0"
+description = "A flexible neural network builder and trainer with visualization capabilities"
+readme = "README.md"
+authors = [
+    { name = "Nsfr750", email = "nsfr750@yandex.com" }
+]
+license = { text = "GPL-3.0-or-later" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=1.9.0",
+    "torchvision>=0.10.0",
+    "numpy>=1.19.5",
+    "matplotlib>=3.4.0",
+    "seaborn>=0.11.0",
+    "tqdm>=4.62.0",
+    "Pillow>=8.3.0"
+]
+
+[project.optional-dependencies]
+visualization = [
+    "torchviz>=0.0.2",
+    "graphviz>=0.16",
+    "tensorboard>=2.6.0",
+    "umap-learn>=0.5.0"
+]
+docs = [
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=0.5.2",
+    "sphinx-copybutton>=0.4.0"
+]
+tests = [
+    "pytest>=6.2.5",
+    "pytest-cov>=2.12.0",
+    "pytest-mock>=3.6.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/Nsfr750/NeuralNetworkApp"
+Bug-Tracker = "https://github.com/Nsfr750/NeuralNetworkApp/issues"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'

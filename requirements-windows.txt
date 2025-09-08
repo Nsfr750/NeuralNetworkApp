@@ -1,0 +1,44 @@
+
+# Core dependencies with specific versions for Windows
+numpy==1.26.4
+matplotlib==3.9.0
+pandas==2.2.2
+scikit-learn==1.5.2
+scipy==1.13.1
+
+# Image processing - Using Wand for all image operations
+wand==0.6.13
+opencv-python-headless==4.9.0.80
+
+# PyTorch ecosystem (CPU-only for Windows)
+# Using --no-deps to prevent Pillow installation
+torch==2.2.1+cpu --no-deps
+torchvision==0.17.1+cpu --no-deps
+torchaudio==2.2.1+cpu --no-deps
+pytorch-lightning==2.2.4
+
+# Configuration and serialization
+pyyaml==6.0.1
+pydantic==2.7.1
+
+# Development and testing
+pytest==8.2.0
+pytest-cov==4.1.0
+black==24.3.0
+tensorboard==2.16.2
+isort==5.13.2
+flake8==7.0.0
+mypy==1.9.0
+
+# Optional dependencies for visualization and UI
+PySide6==6.7.3
+tqdm==4.66.4
+seaborn==0.13.2
+
+# For model interpretation
+captum==0.7.0
+tensorboard==2.16.2
+
+# For deployment
+# Note: torch2trt is not available on Windows
+# Using CPU-only PyTorch for Windows compatibility
