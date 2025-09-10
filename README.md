@@ -147,8 +147,6 @@ Check the `examples/` directory for complete examples, including:
 - **Network Builder Demo**: How to use the network builder programmatically
 - **Optimization Examples**: Various optimization techniques and hyperparameter tuning
 
-## Screenshots
-
 ### Main Application Window
 - Clean, modern interface with intuitive navigation
 - Real-time network architecture visualization

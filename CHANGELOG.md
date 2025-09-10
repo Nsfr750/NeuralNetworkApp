@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Log viewer functionality with View Logs option in Tools menu
 - Enhanced About dialog with logo display and styled close button
 - Improved UI layout and visual design
+- Full and exaustive Help system
 
 ### Fixed
 
