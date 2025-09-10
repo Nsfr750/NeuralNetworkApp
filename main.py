@@ -9,12 +9,25 @@ import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
+import logging
+import json
+
+# Add the project root to the Python path
+project_root = os.path.dirname(os.path.abspath(__file__))
+src_path = os.path.join(project_root, 'src')
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
+# Initialize logger
+from src.ui.logger import get_logger
+logger = get_logger(__name__)
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, Dataset
 
 # PySide6 imports
 from PySide6.QtCore import Qt, QSize, QThread, Signal, Slot, QTimer
@@ -28,6 +41,10 @@ from PySide6.QtWidgets import (
     QHeaderView, QSizePolicy, QSpacerItem, QFrame
 )
 
+# UI Components
+from src.ui.menu import AppMenuBar
+from src.ui.lang_mgr import get_language_manager, get_text
+
 # Matplotlib
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -36,10 +53,10 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 # Custom modules
-from neuralnetworkapp.models import NeuralNetwork, create_model
-from neuralnetworkapp.training import Trainer
-from neuralnetworkapp.data import load_tabular_data, create_data_loaders, TabularDataset
-from neuralnetworkapp.utils import (
+from src.neuralnetworkapp.models import NeuralNetwork, create_model
+from src.neuralnetworkapp.training import Trainer
+from src.neuralnetworkapp.data import load_tabular_data, create_data_loaders, TabularDataset
+from src.neuralnetworkapp.utils import (
     save_model, load_model, plot_training_history,
     save_config, load_config, count_parameters, set_seed
 )
@@ -92,8 +109,14 @@ class TrainingThread(QThread):
     def run(self):
         """Run the training loop."""
         try:
+            logger.info(f"Starting training for {self.epochs} epochs on {self.device}")
+            logger.debug(f"Training configuration: optimizer={self.optimizer_name}, "
+                       f"learning_rate={self.learning_rate}, weight_decay={self.weight_decay}, "
+                       f"loss_fn={self.loss_fn}, metrics={self.metrics}")
+            
             # Move model to device
             self.model = self.model.to(self.device)
+            logger.debug(f"Moved model to {self.device}")
             
             # Initialize trainer
             trainer = Trainer(
@@ -111,10 +134,12 @@ class TrainingThread(QThread):
             
             for epoch in range(self.epochs):
                 if self._stop_requested:
+                    logger.info("Training stopped by user")
                     self.log_message.emit("Training stopped by user.")
-                    break
+                    return
                     
                 self.current_epoch = epoch
+                logger.debug(f"Starting epoch {epoch+1}/{self.epochs}")
                 
                 # Train for one epoch
                 train_loss, train_metrics = trainer.train_epoch(self.train_loader)
@@ -139,14 +164,18 @@ class TrainingThread(QThread):
                 
                 if val_loss is not None:
                     log_msg += f" - val_loss: {val_loss:.4f}"
-                    
+                
+                logger.info(log_msg)
                 self.log_message.emit(log_msg)
             
             # Training completed
+            logger.info(f"Training completed successfully after {self.epochs} epochs")
             self.training_finished.emit(history)
             
         except Exception as e:
-            self.training_error.emit(f"Training error: {str(e)}")
+            error_msg = f"Training error: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            self.training_error.emit(error_msg)
             import traceback
             traceback.print_exc()
     
@@ -157,18 +186,31 @@ class TrainingThread(QThread):
 class NeuralNetworkApp(QMainWindow):
     def __init__(self):
         super().__init__()
+        logger.info("Initializing NeuralNetworkApp")
         self.model = None
         self.training_thread = None
         self.train_loader = None
         self.val_loader = None
         self.test_loader = None
-        self.init_ui()
-        self.setup_connections()
+        
+        # Initialize language manager
+        self.lang_manager = get_language_manager()
+        
+        try:
+            self.init_ui()
+            self.setup_connections()
+            logger.info("UI and connections initialized successfully")
+        except Exception as e:
+            logger.critical("Failed to initialize application", exc_info=True)
+            raise
         
     def init_ui(self):
         # Main window setup
         self.setWindowTitle('Neural Network Creator')
         self.setGeometry(100, 100, 1200, 800)
+        
+        # Create and set menu bar
+        self.setMenuBar(AppMenuBar(self))
         
         # Central widget and main layout
         self.central_widget = QWidget()
@@ -446,30 +488,159 @@ class NeuralNetworkApp(QMainWindow):
             
     def create_model(self):
         try:
-            # Get model parameters
+            logger.info("Creating new model")
+            # Get model configuration from UI
             input_size = self.input_size.value()
             hidden_sizes = [int(x.strip()) for x in self.hidden_layers.text().split(',') if x.strip().isdigit()]
             output_size = self.output_size.value()
             activation = self.activation.currentText().lower()
-            dropout = self.dropout.value()
-            batch_norm = self.batch_norm.isChecked()
+            dropout = self.dropout.value() if self.dropout.value() > 0 else None
+            use_batch_norm = self.batch_norm.isChecked()
+            
+            logger.debug(f"Model configuration: input_size={input_size}, hidden_sizes={hidden_sizes}, "
+                       f"output_size={output_size}, activation={activation}, dropout={dropout}, "
+                       f"batch_norm={use_batch_norm}")
             
             # Create model
-            self.model = create_model(
+            self.model = NeuralNetwork(
                 input_size=input_size,
                 hidden_sizes=hidden_sizes,
                 output_size=output_size,
                 activation=activation,
-                dropout=dropout if dropout > 0 else None,
-                batch_norm=batch_norm
+                dropout=dropout,
+                batch_norm=use_batch_norm
             )
+            
+            logger.info(f"Model created with {sum(p.numel() for p in self.model.parameters())} parameters")
             
             # Update model summary
             self.update_model_summary()
-            self.status_bar.showMessage('Model created successfully', 3000)
+            
+            # Enable training controls
+            self.train_btn.setEnabled(True)
+            self.visualize_btn.setEnabled(True)
+            
+            logger.info("Model creation completed successfully")
             
         except Exception as e:
-            QMessageBox.critical(self, 'Error', f'Failed to create model: {str(e)}')
+            error_msg = f'Failed to create model: {str(e)}'
+            logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self, 'Error', error_msg)
+    
+    def load_data(self):
+        """Load and prepare the dataset for training."""
+        try:
+            logger.info("Loading dataset...")
+            
+            # Show file dialog to select dataset
+            options = QFileDialog.Options()
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                'Open Dataset',
+                '',
+                'CSV Files (*.csv);;All Files (*)',
+                options=options
+            )
+            
+            if not file_path:
+                logger.info("Dataset loading cancelled by user")
+                return
+                
+            logger.info(f"Loading dataset from: {file_path}")
+            
+            # Read CSV file
+            df = pd.read_csv(file_path)
+            
+            # TODO: Add your data preprocessing code here
+            # This is a placeholder - you'll need to modify this based on your dataset
+            
+            # Example: Assuming the last column is the target and the rest are features
+            X = df.iloc[:, :-1].values
+            y = df.iloc[:, -1].values
+            
+            # Convert to PyTorch tensors
+            X_tensor = torch.tensor(X, dtype=torch.float32)
+            y_tensor = torch.tensor(y, dtype=torch.long)
+            
+            # Create dataset and dataloader
+            dataset = TensorDataset(X_tensor, y_tensor)
+            
+            # Split into train and validation sets (80-20 split)
+            train_size = int(0.8 * len(dataset))
+            val_size = len(dataset) - train_size
+            train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+            
+            # Create data loaders
+            batch_size = self.batch_size.value()
+            self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            self.val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+            
+            # Update UI
+            self.status_bar.showMessage(f"Loaded dataset with {len(dataset)} samples", 3000)
+            logger.info(f"Dataset loaded successfully with {len(dataset)} samples")
+            
+            # Enable training button if model exists
+            if self.model is not None:
+                self.train_btn.setEnabled(True)
+            
+            # Update data preview
+            self.update_data_preview(df)
+            
+        except Exception as e:
+            error_msg = f'Failed to load dataset: {str(e)}'
+            logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self, 'Error', error_msg)
+    
+    def visualize_model(self):
+        """Visualize the neural network architecture."""
+        if self.model is None:
+            QMessageBox.warning(self, 'Warning', 'Please create a model first')
+            return
+            
+        try:
+            logger.info("Visualizing model architecture")
+            
+            # Create a simple text representation of the model
+            model_str = str(self.model)
+            
+            # Count parameters
+            total_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+            
+            # Create a dialog to show the model architecture
+            dialog = QDialog(self)
+            dialog.setWindowTitle('Model Visualization')
+            dialog.setMinimumSize(600, 400)
+            
+            layout = QVBoxLayout(dialog)
+            
+            # Add model summary
+            summary_label = QLabel('Model Architecture:')
+            summary_text = QTextEdit()
+            summary_text.setReadOnly(True)
+            summary_text.setPlainText(model_str)
+            
+            # Add parameter count
+            params_label = QLabel(f'Total Trainable Parameters: {total_params:,}')
+            font = params_label.font()
+            font.setBold(True)
+            params_label.setFont(font)
+            
+            # Add close button
+            button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+            button_box.accepted.connect(dialog.accept)
+            
+            # Add widgets to layout
+            layout.addWidget(summary_label)
+            layout.addWidget(summary_text)
+            layout.addWidget(params_label)
+            layout.addWidget(button_box)
+            
+            dialog.exec()
+            
+        except Exception as e:
+            error_msg = f'Failed to visualize model: {str(e)}'
+            logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self, 'Error', error_msg)
     
     def update_model_summary(self):
         if self.model is None:
@@ -495,207 +666,45 @@ class NeuralNetworkApp(QMainWindow):
         
         self.model_summary.setPlainText('\n'.join(summary))
         
-    def visualize_model(self):
-        if self.model is None:
-            QMessageBox.warning(self, 'Warning', 'Please create a model first')
-            return
-            
-        # Simple visualization using matplotlib
-        try:
-            from torchviz import make_dot
-            import tempfile
-            import os
-            
-            # Save current training mode and set to eval
-            was_training = self.model.training
-            self.model.eval()
-            
-            # Create a dummy input
-            input_size = self.input_size.value()
-            x = torch.randn(1, input_size)
-            
-            # Generate the graph
-            with torch.no_grad():
-                y = self.model(x)
-            
-            # Create visualization
-            dot = make_dot(y, params=dict(self.model.named_parameters()))
-            
-            # Create a temporary directory for the image
-            import tempfile
-            import os
-            temp_dir = tempfile.mkdtemp()
-            try:
-                # Save to a temporary file in the directory
-                img_path = os.path.join(temp_dir, 'model_viz.png')
-                dot.render(img_path.replace('.png', ''), format='png', cleanup=True)
-                
-                # Show the image
-                from PIL import Image
-                img = Image.open(img_path)
-                img.show()
-                
-            finally:
-                # Clean up the temporary directory
-                try:
-                    if os.path.exists(img_path):
-                        os.remove(img_path)
-                    os.rmdir(temp_dir)
-                except Exception as e:
-                    print(f"Warning: Could not clean up temporary files: {e}")
-            
-            # Restore original training mode
-            self.model.train(was_training)
-                
-        except ImportError:
-            QMessageBox.information(
-                self, 
-                'Info', 
-                'For model visualization, please install torchviz and graphviz:\n'
-                'pip install torchviz\n'
-                'Also install graphviz:\n'
-                'Windows: choco install graphviz\n'
-                'macOS: brew install graphviz\n'
-                'Linux: sudo apt-get install graphviz'
-            )
-    
-    def load_data(self):
-        path = self.dataset_path.text().strip()
-        if not path:
-            QMessageBox.warning(self, 'Warning', 'Please select a dataset first')
-            return
-            
-        try:
-            self.status_bar.showMessage('Loading data...')
-            QApplication.processEvents()  # Update UI
-            
-            # Check if path is a directory (image data) or file (CSV)
-            if os.path.isdir(path):
-                # Load image data
-                dataloaders, self.metadata = load_image_data(
-                    data_dir=path,
-                    test_size=self.test_split.value(),
-                    val_size=self.val_split.value(),
-                    batch_size=self.batch_size.value()
-                )
-            else:
-                # Load tabular data
-                target_col = self.target_column.text().strip() or None
-                normalize = self.normalize_check.isChecked()
-                standardize = self.standardize_check.isChecked()
-                
-                datasets, self.metadata = load_tabular_data(
-                    file_path=path,
-                    target_column=target_col,
-                    test_size=self.test_split.value(),
-                    val_size=self.val_split.value(),
-                    normalize=normalize,
-                    standardize=standardize
-                )
-                
-                # Create data loaders
-                dataloaders = create_data_loaders(
-                    datasets=datasets,
-                    batch_size=self.batch_size.value(),
-                    shuffle=True
-                )
-            
-            # Store data loaders
-            self.train_loader = dataloaders['train']
-            self.val_loader = dataloaders.get('val')
-            self.test_loader = dataloaders.get('test')
-            
-            # Update data preview
-            self.update_data_preview()
-            
-            # Update model input size if not set
-            if hasattr(self, 'metadata') and 'num_features' in self.metadata:
-                self.input_size.setValue(self.metadata['num_features'])
-            
-            self.status_bar.showMessage('Data loaded successfully', 3000)
-            
-        except Exception as e:
-            QMessageBox.critical(self, 'Error', f'Failed to load data: {str(e)}')
-            import traceback
-            traceback.print_exc()
-    
-    def update_data_preview(self):
-        self.data_preview.setRowCount(0)  # Clear existing rows
-        
-        # Set column count and headers
-        self.data_preview.setColumnCount(5)
-        self.data_preview.setHorizontalHeaderLabels(['Split', 'Shape', 'Min', 'Max', 'Mean'])
-        
-        # Add data for each split
-        for i, (split_name, loader) in enumerate([
-            ('Train', self.train_loader),
-            ('Validation', self.val_loader),
-            ('Test', self.test_loader)
-        ]):
-            if loader is None:
-                continue
-                
-            # Get a batch of data
-            try:
-                x, y = next(iter(loader))
-                
-                # Calculate stats
-                shape = f'Batch: {tuple(x.shape)}'
-                min_val = f'{x.min().item():.4f}'
-                max_val = f'{x.max().item():.4f}'
-                mean_val = f'{x.float().mean().item():.4f}'
-                
-                # Add new row
-                row = self.data_preview.rowCount()
-                self.data_preview.insertRow(row)
-                
-                # Add items to the row
-                self.data_preview.setItem(row, 0, QTableWidgetItem(split_name))
-                self.data_preview.setItem(row, 1, QTableWidgetItem(shape))
-                self.data_preview.setItem(row, 2, QTableWidgetItem(min_val))
-                self.data_preview.setItem(row, 3, QTableWidgetItem(max_val))
-                self.data_preview.setItem(row, 4, QTableWidgetItem(mean_val))
-                
-            except StopIteration:
-                continue
-                
-        # Resize columns to fit content
-        self.data_preview.resizeColumnsToContents()
-    
     def start_training(self):
         if self.model is None:
             QMessageBox.warning(self, 'Warning', 'Please create a model first')
+            logger.warning("Attempted to start training without a model")
             return
             
-        if not hasattr(self, 'train_loader') or self.train_loader is None:
+        if self.train_loader is None:
             QMessageBox.warning(self, 'Warning', 'Please load training data first')
+            logger.warning("Attempted to start training without training data")
             return
             
         try:
-            # Get training parameters
-            epochs = self.epochs.value()
-            lr = self.learning_rate.value()
-            weight_decay = self.weight_decay.value()
-            optimizer = self.optimizer.currentText().lower()
-            loss_fn = self.loss_fn.currentText().lower()
+            logger.info("Starting training process")
             
-            # Get device
-            device = self.device.currentText().lower()
-            if device == 'auto':
-                device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            # Disable UI elements during training
+            self.train_btn.setEnabled(False)
+            self.stop_btn.setEnabled(True)
+            self.progress.setValue(0)
+            self.training_log.clear()
+            
+            # Log training configuration
+            logger.info(f"Training configuration: epochs={self.epochs.value()}, "
+                       f"learning_rate={self.learning_rate.value()}, "
+                       f"optimizer={self.optimizer.currentText().lower()}, "
+                       f"weight_decay={self.weight_decay.value()}, "
+                       f"loss_fn={self.loss_fn.currentText().lower()}, "
+                       f"device={self.device.currentText().lower()}")
             
             # Create and start training thread
             self.training_thread = TrainingThread(
                 model=self.model,
                 train_loader=self.train_loader,
-                val_loader=self.val_loader if hasattr(self, 'val_loader') and self.val_loader is not None else None,
-                epochs=epochs,
-                learning_rate=lr,
-                weight_decay=weight_decay,
-                optimizer=optimizer,
-                loss_fn=loss_fn,
-                metrics=['accuracy'],
-                device=device
+                val_loader=self.val_loader,
+                epochs=self.epochs.value(),
+                learning_rate=self.learning_rate.value(),
+                optimizer=self.optimizer.currentText().lower(),
+                weight_decay=self.weight_decay.value(),
+                loss_fn=self.loss_fn.currentText().lower(),
+                device=self.device.currentText().lower()
             )
             
             # Connect signals
@@ -704,26 +713,23 @@ class NeuralNetworkApp(QMainWindow):
             self.training_thread.training_finished.connect(self.training_finished)
             self.training_thread.training_error.connect(self.training_error)
             
-            # Update UI
-            self.train_btn.setEnabled(False)
-            self.stop_btn.setEnabled(True)
-            self.progress.setValue(0)
-            self.training_log.clear()
-            
             # Start training
+            logger.debug("Starting training thread")
             self.training_thread.start()
-            self.log_message(f'Training started on {device.upper()}')
-            self.log_message(f'Optimizer: {optimizer}, LR: {lr}, Epochs: {epochs}, Batch Size: {self.batch_size.value()}')
+            logger.info("Training started successfully")
             
         except Exception as e:
-            QMessageBox.critical(self, 'Error', f'Failed to start training: {str(e)}')
-            import traceback
-            traceback.print_exc()
-    
+            error_msg = f'Failed to start training: {str(e)}'
+            logger.error(error_msg, exc_info=True)
+            QMessageBox.critical(self, 'Error', error_msg)
+            
     def stop_training(self):
-        if self.training_thread is not None and self.training_thread.isRunning():
+        if self.training_thread and self.training_thread.isRunning():
+            logger.info("Stopping training...")
             self.training_thread.stop()
-            self.log_message('Stopping training...')
+            self.train_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            logger.info("Training stopped by user request")
     
     def update_training_progress(self, epoch, train_loss, val_loss):
         # Update progress bar
@@ -737,21 +743,39 @@ class NeuralNetworkApp(QMainWindow):
         self.status_bar.showMessage(status)
     
     def log_message(self, message):
-        self.training_log.append(message)
-        # Auto-scroll to bottom
-        scrollbar = self.training_log.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        try:
+            self.training_log.append(message)
+            # Auto-scroll to bottom
+            scrollbar = self.training_log.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+        except Exception as e:
+            logger.error(f"Failed to update log message: {str(e)}", exc_info=True)
     
     def training_finished(self, history):
-        self.train_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
-        self.progress.setValue(100)
-        self.log_message('Training finished!')
-        
-        # Plot training history
-        self.plot_training_history(history)
+        try:
+            logger.info("Training completed successfully")
+            self.train_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            self.progress.setValue(100)
+            self.log_message('Training finished!')
+            
+            # Log final metrics
+            if history and 'train_loss' in history and history['train_loss']:
+                final_train_loss = history['train_loss'][-1]
+                logger.info(f"Final training loss: {final_train_loss:.6f}")
+                if 'val_loss' in history and history['val_loss']:
+                    final_val_loss = history['val_loss'][-1]
+                    logger.info(f"Final validation loss: {final_val_loss:.6f}")
+            
+            # Plot training history
+            self.plot_training_history(history)
+        except Exception as e:
+            error_msg = f"Error in training_finished: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            QMessageBox.warning(self, 'Warning', error_msg)
     
     def training_error(self, error_msg):
+        logger.error(f"Training error: {error_msg}")
         QMessageBox.critical(self, 'Training Error', error_msg)
         self.train_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -913,12 +937,27 @@ class NeuralNetworkApp(QMainWindow):
             QMessageBox.critical(self, 'Error', f'Failed to load model: {str(e)}')
     
     def closeEvent(self, event):
-        # Stop training if running
-        if hasattr(self, 'training_thread') and self.training_thread is not None:
-            if self.training_thread.isRunning():
-                self.training_thread.stop()
-                self.training_thread.wait()
-        event.accept()
+        try:
+            logger.info("Application closing...")
+            # Stop training if running
+            if hasattr(self, 'training_thread') and self.training_thread is not None:
+                if self.training_thread.isRunning():
+                    logger.info("Stopping training thread...")
+                    self.training_thread.stop()
+                    self.training_thread.wait()
+                    logger.info("Training thread stopped")
+            
+            # Clean up resources
+            if hasattr(self, 'model') and self.model is not None:
+                logger.debug("Cleaning up model resources")
+                # Add any model cleanup code here
+            
+            logger.info("Application closed successfully")
+            
+        except Exception as e:
+            logger.error(f"Error during application close: {str(e)}", exc_info=True)
+        finally:
+            event.accept()
 
 def main():
     app = QApplication(sys.argv)
