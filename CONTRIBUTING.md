@@ -1,4 +1,4 @@
-# Contributing to Benchmark
+# Contributing to Neural Nerwork
 
 First off, thank you for considering contributing to Benchmark! It's people like you that make open-source software a great community.
 
@@ -9,8 +9,8 @@ This project adheres to the [Contributor Covenant](https://www.contributor-coven
 ## How Can I Contribute?
 
 ### Reporting Bugs
-- Ensure the bug was not already reported by searching in [GitHub Issues](https://github.com/Nsfr750/benchmark/issues).
-- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/Nsfr750/benchmark/issues/new).
+- Ensure the bug was not already reported by searching in [GitHub Issues](https://github.com/Nsfr750/NeuralNetworkApp/issues).
+- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/Nsfr750/NeuralNetworkApp/issues/new).
 - Be sure to include a title and clear description, and as much relevant information as possible.
 
 ### Suggesting Enhancements
