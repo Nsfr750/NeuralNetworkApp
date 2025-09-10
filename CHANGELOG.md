@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-09-08
 
 ### Added
+
 - Initial release of NeuralNetworkApp
 - Basic neural network building blocks
 - MNIST classification example
@@ -30,21 +31,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regularization techniques
 - Custom loss functions and metrics
 - Model deployment utilities
+- Application icon using assets/logo.png
+- Tools menu in the main application interface
+- Log viewer functionality with View Logs option in Tools menu
+- Enhanced About dialog with logo display and styled close button
+- Improved UI layout and visual design
+
+### Fixed
+
+- Fixed import error in view_log.py for src module
+- Fixed Signal import error in view_log.py
+- Resolved module path issues for standalone script execution
 
 ### Changed
+
 - N/A
 
 ### Deprecated
+
 - N/A
 
 ### Removed
-- N/A
 
-### Fixed
 - N/A
 
 ### Security
+
 - N/A
 
 ---
+
 © Copyright 2025 Nsfr750. All rights reserved.
