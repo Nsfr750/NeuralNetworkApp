@@ -1,0 +1,43 @@
+# CODEOWNERS file for NeuralNetworkApp
+# This file defines ownership rules for the repository
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners for details
+
+# Global owners - will be requested for review on any changes
+* @Nsfr750
+
+# Core application files
+src/ @Nsfr750
+src/ui/ @Nsfr750
+src/neuralnetworkapp/ @Nsfr750
+main.py @Nsfr750
+
+# Configuration and build files
+pyproject.toml @Nsfr750
+setup.py @Nsfr750
+requirements*.txt @Nsfr750
+
+# Documentation
+docs/ @Nsfr750
+README.md @Nsfr750
+CHANGELOG.md @Nsfr750
+TO_DO.md @Nsfr750
+
+# Examples and tests
+examples/ @Nsfr750
+tests/ @Nsfr750
+
+# Assets and resources
+assets/ @Nsfr750
+
+# Scripts and utilities
+script/ @Nsfr750
+utils/ @Nsfr750
+
+# CI/CD and configuration files
+.github/ @Nsfr750
+.gitignore @Nsfr750
+.gitattributes @Nsfr750
+CODEOWNERS @Nsfr750
+
+# Emergency fallback - if no other owners are available, request review from maintainer
+* @Nsfr750
