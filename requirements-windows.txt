@@ -1,4 +1,3 @@
-
 # Core dependencies with specific versions for Windows
 numpy==1.26.4
 matplotlib==3.9.0
@@ -17,23 +16,28 @@ torchvision==0.17.1+cpu --no-deps
 torchaudio==2.2.1+cpu --no-deps
 pytorch-lightning==2.2.4
 
+# GUI Framework - PySide6 for modern interface
+PySide6==6.7.3
+PySide6-Qt6==6.7.3
+
 # Configuration and serialization
 pyyaml==6.0.1
 pydantic==2.7.1
+
+# Progress bars and utilities
+tqdm==4.66.4
 
 # Development and testing
 pytest==8.2.0
 pytest-cov==4.1.0
 black==24.3.0
-tensorboard==2.16.2
 isort==5.13.2
 flake8==7.0.0
 mypy==1.9.0
 
 # Optional dependencies for visualization and UI
-PySide6==6.7.3
-tqdm==4.66.4
 seaborn==0.13.2
+plotly==5.22.0
 
 # For model interpretation
 captum==0.7.0
@@ -42,3 +46,8 @@ tensorboard==2.16.2
 # For deployment
 # Note: torch2trt is not available on Windows
 # Using CPU-only PyTorch for Windows compatibility
+onnx==1.16.0
+
+# Windows-specific utilities
+pywin32==306; sys_platform == 'win32'
+colorama==0.4.6

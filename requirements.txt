@@ -25,9 +25,16 @@ torch-lr-finder>=0.2.1
 # For mixed precision training
 torch-amp>=0.1.0
 
+# GUI Framework - PySide6 for modern interface
+PySide6>=6.8.3,<7.0.0
+PySide6-Qt6>=6.8.3,<7.0.0
+
 # Configuration and serialization
 pyyaml>=6.0.2,<7.0.0
 pydantic>=2.5.2,<3.0.0
+
+# Progress bars and utilities
+tqdm>=4.65.0,<5.0.0
 
 # Development and testing
 pytest>=7.0.0,<8.0.0
@@ -37,10 +44,9 @@ isort>=5.12.0,<6.0.0
 flake8>=6.0.0,<7.0.0
 mypy>=1.0.0,<2.0.0
 
-# Optional dependencies for visualization and UI
-PySide6>=6.8.3,<7.0.0
-tqdm>=4.65.0,<5.0.0
+# Visualization and UI components
 seaborn>=0.12.0,<1.0.0
+plotly>=5.0.0,<6.0.0
 
 # For model interpretation
 captum>=0.6.0,<1.0.0
