@@ -133,11 +133,14 @@ class AppMenuBar(QMenuBar):
         theme_menu.addAction(dark_theme)
         theme_group.addAction(dark_theme)
         
-        # Light Theme
-        light_theme = QAction(get_text('menu.light', 'Light'), self)
-        light_theme.setCheckable(True)
-        theme_menu.addAction(light_theme)
-        theme_group.addAction(light_theme)
+        # Tools Menu
+        tools_menu = self.addMenu(get_text('menu.tools', '&Tools'))
+        
+        # View Logs Action
+        view_logs_action = tools_menu.addAction(get_text('menu.view_logs', 'View Logs'))
+        view_logs_action.triggered.connect(self.view_logs)
+
+        tools_menu.addSeparator()
         
         # Help Menu
         help_menu = self.addMenu(get_text('menu.help', '&Help'))
@@ -150,13 +153,6 @@ class AppMenuBar(QMenuBar):
         # Wiki Action
         wiki_action = help_menu.addAction(get_text('menu.documentation', 'Documentation (Wiki)'))
         wiki_action.triggered.connect(self.open_wiki)
-        
-        # Add separator
-        help_menu.addSeparator()
-        
-        # View Logs Action
-        view_logs_action = help_menu.addAction(get_text('menu.view_logs', 'View Logs'))
-        view_logs_action.triggered.connect(self.view_logs)
         
         # Add separator
         help_menu.addSeparator()
@@ -202,8 +198,12 @@ class AppMenuBar(QMenuBar):
         view_menu = self.actions()[2].menu()
         view_menu.setTitle(get_text('menu.view', '&View'))
         
+        # Tools menu
+        tools_menu = self.actions()[3].menu()
+        tools_menu.setTitle(get_text('menu.tools', '&Tools'))
+        
         # Help menu
-        help_menu = self.actions()[3].menu()
+        help_menu = self.actions()[4].menu()
         help_menu.setTitle(get_text('menu.help', '&Help'))
     
     def close_application(self):

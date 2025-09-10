@@ -46,7 +46,8 @@ TRANSLATIONS = {
             "theme": "Theme",
             "dark": "Dark",
             "light": "Light",
-            "system": "System"
+            "system": "System",
+            "tools": "Tools"
         },
         "model": {
             "title": "Model",
@@ -172,7 +173,8 @@ TRANSLATIONS = {
             "theme": "Tema",
             "dark": "Scuro",
             "light": "Chiaro",
-            "system": "Sistema"
+            "system": "Sistema",
+            "tools": "Strumenti"
         },
         "model": {
             "title": "Modello",

@@ -253,13 +253,13 @@ class HelpDialog(QDialog):
         <head>
             <style>
                 body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                h1 {{ color: #2c3e50; border-bottom: 2px solid #3498db; }}
-                h2 {{ color: #34495e; margin-top: 30px; }}
-                h3 {{ color: #7f8c8d; }}
-                code {{ background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px; }}
-                .note {{ background-color: #f8f9fa; padding: 10px; border-left: 4px solid #3498db; margin: 10px 0; }}
-                .warning {{ background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 10px 0; }}
-                .tip {{ background-color: #d4edda; padding: 10px; border-left: 4px solid #28a745; margin: 10px 0; }}
+                h1 {{ color: #44607b; border-bottom: 2px solid #3498db; }}
+                h2 {{ color: #44607b; margin-top: 30px; }}
+                h3 {{ color: #44607b; }}
+                code {{ background-color: #1f1f1f; padding: 2px 4px; border-radius: 3px; }}
+                .note {{ background-color: #1f1f1f; padding: 10px; border-left: 4px solid #3498db; margin: 10px 0; }}
+                .warning {{ background-color: #1f1f1f; padding: 10px; border-left: 4px solid #ffc107; margin: 10px 0; }}
+                .tip {{ background-color: #1f1f1f; padding: 10px; border-left: 4px solid #28a745; margin: 10px 0; }}
                 ul {{ margin: 10px 0; }}
                 li {{ margin: 5px 0; }}
             </style>
@@ -378,12 +378,12 @@ class HelpDialog(QDialog):
         <head>
             <style>
                 body { font-family: Arial, sans-serif; margin: 20px; }
-                h1 { color: #2c3e50; border-bottom: 2px solid #3498db; }
-                h2 { color: #34495e; margin-top: 30px; }
-                h3 { color: #7f8c8d; }
-                code { background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px; }
-                pre { background-color: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
-                .example-box { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin: 15px 0; }
+                h1 { color: #44607b; border-bottom: 2px solid #3498db; }
+                h2 { color: #44607b; margin-top: 30px; }
+                h3 { color: #44607b; }
+                code { background-color: #1f1f1f; padding: 2px 4px; border-radius: 3px; }
+                pre { background-color: #1f1f1f; padding: 15px; border-radius: 5px; overflow-x: auto; }
+                .example-box { background-color: #1f1f1f; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin: 15px 0; }
             </style>
         </head>
         <body>

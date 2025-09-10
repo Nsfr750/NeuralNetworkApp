@@ -1069,6 +1069,14 @@ def main():
     # Set application style
     app.setStyle('Fusion')
     
+    # Set application icon
+    icon_path = os.path.join(project_root, 'assets', 'logo.png')
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
+        logger.info(f"Application icon set from: {icon_path}")
+    else:
+        logger.warning(f"Application icon not found at: {icon_path}")
+    
     # Create and show the main window
     window = NeuralNetworkApp()
     window.show()

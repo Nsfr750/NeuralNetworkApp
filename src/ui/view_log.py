@@ -6,15 +6,21 @@ import sys
 import logging
 from pathlib import Path
 
+# Add the src directory to the Python path for proper imports
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+src_path = os.path.join(project_root, 'src')
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QComboBox,
     QPushButton, QTextEdit, QLabel, QFileDialog,
     QMessageBox, QApplication, QSizePolicy, QLineEdit
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 
 # Import language manager
-from .lang_mgr import get_language_manager, get_text
+from ui.lang_mgr import get_language_manager, get_text
 log = logging.getLogger(__name__)
 
 class LogViewer(QDialog):

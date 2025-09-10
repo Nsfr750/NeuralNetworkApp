@@ -5,12 +5,14 @@ Logging configuration and utilities for the Neural Network application.
 import os
 import sys
 import logging
-from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
+from datetime import datetime
 
 def setup_logger(name: str = 'neuralnetwork', log_level: int = logging.INFO) -> logging.Logger:
     """
-    Configure and return a logger with file and console handlers.
+    Configure and return a logger with daily rotating file and console handlers.
+    Creates a new log file every day with the date in the filename.
     
     Args:
         name: Name of the logger
@@ -45,14 +47,18 @@ def setup_logger(name: str = 'neuralnetwork', log_level: int = logging.INFO) -> 
     )
     
     try:
-        # File handler (rotating)
-        log_file = logs_dir / 'neuralnetwork.log'
-        file_handler = RotatingFileHandler(
+        # File handler (daily rotation with date in filename)
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        log_file = logs_dir / f'neuralnetwork_{current_date}.log'
+        file_handler = TimedRotatingFileHandler(
             log_file,
-            maxBytes=5*1024*1024,  # 5 MB
-            backupCount=3,
+            when='midnight',  # Rotate at midnight
+            interval=1,       # Every day
+            backupCount=30,   # Keep 30 days of logs
             encoding='utf-8'
         )
+        # Set the filename suffix for rotated files
+        file_handler.suffix = '%Y-%m-%d'
         file_handler.setFormatter(file_formatter)
         logger.addHandler(file_handler)
     except Exception as e:
