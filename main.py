@@ -568,6 +568,27 @@ class NeuralNetworkApp(QMainWindow):
             X = df.iloc[:, :-1].values
             y = df.iloc[:, -1].values
             
+            # Get the actual input size from the dataset
+            actual_input_size = X.shape[1]
+            logger.info(f"Dataset has {actual_input_size} features")
+            
+            # Store the old input size for notification
+            old_input_size = self.input_size.value()
+            
+            # Update the input size in the UI to match the dataset
+            self.input_size.setValue(actual_input_size)
+            
+            # If a model already exists, recreate it with the correct input size
+            if self.model is not None:
+                logger.info(f"Recreating model with input size {actual_input_size} to match dataset")
+                self.create_model()
+                # Show user notification about model recreation
+                QMessageBox.information(
+                    self, 
+                    'Model Updated', 
+                    f'The model input size has been automatically updated from {old_input_size} to {actual_input_size} to match your dataset.\n\nThe model has been recreated with the correct dimensions.'
+                )
+            
             # Convert to PyTorch tensors
             X_tensor = torch.tensor(X, dtype=torch.float32)
             y_tensor = torch.tensor(y, dtype=torch.long)
@@ -594,12 +615,85 @@ class NeuralNetworkApp(QMainWindow):
                 self.train_btn.setEnabled(True)
             
             # Update data preview
-            self.update_data_preview(df)
+            self.update_data_preview(df, X, y)
             
         except Exception as e:
             error_msg = f'Failed to load dataset: {str(e)}'
             logger.error(error_msg, exc_info=True)
             QMessageBox.critical(self, 'Error', error_msg)
+    
+    def update_data_preview(self, df, X, y):
+        """Update the data preview table with dataset statistics."""
+        try:
+            logger.info("Updating data preview")
+            
+            # Clear existing data
+            self.data_preview.setRowCount(0)
+            
+            # Calculate statistics for full dataset
+            full_row = self.data_preview.rowCount()
+            self.data_preview.insertRow(full_row)
+            self.data_preview.setItem(full_row, 0, QTableWidgetItem("Full Dataset"))
+            self.data_preview.setItem(full_row, 1, QTableWidgetItem(f"{X.shape[0]} samples, {X.shape[1]} features"))
+            self.data_preview.setItem(full_row, 2, QTableWidgetItem(f"{X.min():.4f}"))
+            self.data_preview.setItem(full_row, 3, QTableWidgetItem(f"{X.max():.4f}"))
+            self.data_preview.setItem(full_row, 4, QTableWidgetItem(f"{X.mean():.4f}"))
+            
+            # Calculate statistics for training set (80% of data)
+            train_size = int(0.8 * len(X))
+            X_train = X[:train_size]
+            y_train = y[:train_size]
+            
+            train_row = self.data_preview.rowCount()
+            self.data_preview.insertRow(train_row)
+            self.data_preview.setItem(train_row, 0, QTableWidgetItem("Training Set"))
+            self.data_preview.setItem(train_row, 1, QTableWidgetItem(f"{X_train.shape[0]} samples, {X_train.shape[1]} features"))
+            self.data_preview.setItem(train_row, 2, QTableWidgetItem(f"{X_train.min():.4f}"))
+            self.data_preview.setItem(train_row, 3, QTableWidgetItem(f"{X_train.max():.4f}"))
+            self.data_preview.setItem(train_row, 4, QTableWidgetItem(f"{X_train.mean():.4f}"))
+            
+            # Calculate statistics for validation set (20% of data)
+            X_val = X[train_size:]
+            y_val = y[train_size:]
+            
+            val_row = self.data_preview.rowCount()
+            self.data_preview.insertRow(val_row)
+            self.data_preview.setItem(val_row, 0, QTableWidgetItem("Validation Set"))
+            self.data_preview.setItem(val_row, 1, QTableWidgetItem(f"{X_val.shape[0]} samples, {X_val.shape[1]} features"))
+            self.data_preview.setItem(val_row, 2, QTableWidgetItem(f"{X_val.min():.4f}"))
+            self.data_preview.setItem(val_row, 3, QTableWidgetItem(f"{X_val.max():.4f}"))
+            self.data_preview.setItem(val_row, 4, QTableWidgetItem(f"{X_val.mean():.4f}"))
+            
+            # Add target variable statistics
+            target_row = self.data_preview.rowCount()
+            self.data_preview.insertRow(target_row)
+            self.data_preview.setItem(target_row, 0, QTableWidgetItem("Target Variable"))
+            self.data_preview.setItem(target_row, 1, QTableWidgetItem(f"{len(y)} samples"))
+            self.data_preview.setItem(target_row, 2, QTableWidgetItem(f"{y.min():.4f}"))
+            self.data_preview.setItem(target_row, 3, QTableWidgetItem(f"{y.max():.4f}"))
+            self.data_preview.setItem(target_row, 4, QTableWidgetItem(f"{y.mean():.4f}"))
+            
+            # Add class distribution if it's a classification problem
+            unique_classes = np.unique(y)
+            if len(unique_classes) <= 10:  # Only show for classification with reasonable number of classes
+                for i, class_label in enumerate(unique_classes):
+                    class_count = np.sum(y == class_label)
+                    class_percentage = (class_count / len(y)) * 100
+                    
+                    class_row = self.data_preview.rowCount()
+                    self.data_preview.insertRow(class_row)
+                    self.data_preview.setItem(class_row, 0, QTableWidgetItem(f"Class {int(class_label)}"))
+                    self.data_preview.setItem(class_row, 1, QTableWidgetItem(f"{class_count} samples ({class_percentage:.1f}%)"))
+                    self.data_preview.setItem(class_row, 2, QTableWidgetItem("-"))
+                    self.data_preview.setItem(class_row, 3, QTableWidgetItem("-"))
+                    self.data_preview.setItem(class_row, 4, QTableWidgetItem("-"))
+            
+            logger.info("Data preview updated successfully")
+            
+        except Exception as e:
+            error_msg = f'Failed to update data preview: {str(e)}'
+            logger.error(error_msg, exc_info=True)
+            # Don't show error dialog for preview update as it's not critical
     
     def visualize_model(self):
         """Visualize the neural network architecture."""
