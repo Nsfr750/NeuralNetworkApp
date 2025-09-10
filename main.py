@@ -38,7 +38,7 @@ from PySide6.QtWidgets import (
     QSpinBox, QDoubleSpinBox, QComboBox, QGroupBox, QFormLayout,
     QTextEdit, QSplitter, QProgressBar, QCheckBox, QLineEdit,
     QListWidget, QListWidgetItem, QTableWidget, QTableWidgetItem,
-    QHeaderView, QSizePolicy, QSpacerItem, QFrame
+    QHeaderView, QSizePolicy, QSpacerItem, QFrame, QDialog, QDialogButtonBox
 )
 
 # UI Components
@@ -551,10 +551,20 @@ class NeuralNetworkApp(QMainWindow):
             # Read CSV file
             df = pd.read_csv(file_path)
             
-            # TODO: Add your data preprocessing code here
-            # This is a placeholder - you'll need to modify this based on your dataset
+            # Data preprocessing - handle non-numeric data
+            # Convert categorical columns to numeric using label encoding
+            for column in df.columns:
+                if df[column].dtype == 'object':
+                    # Use label encoding for categorical data
+                    df[column] = pd.Categorical(df[column]).codes
             
-            # Example: Assuming the last column is the target and the rest are features
+            # Remove any rows with NaN values that might result from conversion
+            df = df.dropna()
+            
+            # Convert all data to float32 for consistency
+            df = df.astype(np.float32)
+            
+            # Assuming the last column is the target and the rest are features
             X = df.iloc[:, :-1].values
             y = df.iloc[:, -1].values
             
