@@ -167,7 +167,7 @@ def fine_tune_model(
     Returns:
         Training history
     """
-    from neuralnetworkapp.trainingimport Trainer  # Import here to avoid circular imports
+    from neuralnetworkapp.training import Trainer  # Import here to avoid circular imports
     
     # Set up default criterion if not provided
     if criterion is None:
