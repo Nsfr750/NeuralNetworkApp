@@ -100,8 +100,8 @@ def get_nuitka_command(compilation_mode="standalone", debug=False):
         f"--output-filename={config['output_filename']}",
         f"--company-name={config['company']}",
         f"--product-name={config['name']}",
-        f"--file-version={config['version']}.0.0",
-        f"--product-version={config['version']}.0.0",
+        f"--file-version={config['version']}.0",
+        f"--product-version={config['version']}.0",
         f"--file-description={config['description']}",
         f"--copyright={config['copyright']}",
         "--remove-output",
@@ -153,7 +153,6 @@ def get_nuitka_command(compilation_mode="standalone", debug=False):
     # Add platform-specific options
     if platform.system() == "Windows":
         cmd.extend([
-            "--windows-dependency-toolchain=ucrt",
             "--disable-console" if compilation_mode == "standalone" else ""
         ])
         cmd = [x for x in cmd if x]  # Remove empty strings
@@ -170,44 +169,44 @@ def check_dependencies():
     # Check for Nuitka
     try:
         import nuitka
-        print("✓ Nuitka found")
+        print("[OK] Nuitka found")
     except ImportError:
-        print("✗ Nuitka not found. Installing...")
+        print("[ERROR] Nuitka not found. Installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "nuitka"])
     
     # Check for PySide6
     try:
         import PySide6
-        print("✓ PySide6 found")
+        print("[OK] PySide6 found")
     except ImportError:
-        print("✗ PySide6 not found. Installing...")
+        print("[ERROR] PySide6 not found. Installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "PySide6"])
     
     # Check for torch
     try:
         import torch
-        print("✓ PyTorch found")
+        print("[OK] PyTorch found")
     except ImportError:
-        print("✗ PyTorch not found. Installing...")
+        print("[ERROR] PyTorch not found. Installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "torch", "torchvision", "torchaudio", "--index-url", "https://download.pytorch.org/whl/cpu"])
     
     # Check for numpy
     try:
         import numpy
-        print("✓ NumPy found")
+        print("[OK] NumPy found")
     except ImportError:
-        print("✗ NumPy not found. Installing...")
+        print("[ERROR] NumPy not found. Installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "numpy"])
     
     # Check for matplotlib
     try:
         import matplotlib
-        print("✓ Matplotlib found")
+        print("[OK] Matplotlib found")
     except ImportError:
-        print("✗ Matplotlib not found. Installing...")
+        print("[ERROR] Matplotlib not found. Installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "matplotlib"])
     
-    print("✓ All dependencies checked")
+    print("[OK] All dependencies checked")
     return True
 
 
@@ -317,11 +316,11 @@ def compile_project(mode="standalone", debug=False):
                 logger.info("Compilation completed successfully!")
                 return True
             else:
-                logger.error(f"✗ Compilation failed with return code: {result.returncode}")
+                logger.error(f"[ERROR] Compilation failed with return code: {result.returncode}")
                 return False
                 
         except subprocess.CalledProcessError as e:
-            logger.error(f"✗ Compilation failed with error code: {e.returncode}")
+            logger.error(f"[ERROR] Compilation failed with error code: {e.returncode}")
             if e.stderr:
                 logger.error("Error output:")
                 logger.error(e.stderr)
@@ -330,15 +329,15 @@ def compile_project(mode="standalone", debug=False):
                 logger.info(e.stdout)
             return False
         except KeyboardInterrupt:
-            logger.warning("✗ Compilation interrupted by user.")
+            logger.warning("[WARNING] Compilation interrupted by user.")
             return False
         except Exception as e:
-            logger.error(f"✗ Unexpected error during compilation: {e}")
+            logger.error(f"[ERROR] Unexpected error during compilation: {e}")
             logger.exception("Full traceback:")
             return False
             
     except Exception as e:
-        logger.error(f"✗ Critical error during compilation setup: {e}")
+        logger.error(f"[ERROR] Critical error during compilation setup: {e}")
         logger.exception("Full traceback:")
         return False
 
