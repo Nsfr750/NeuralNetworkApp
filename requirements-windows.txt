@@ -1,20 +1,19 @@
-# Core dependencies with specific versions for Windows
-numpy==1.26.4
-matplotlib==3.9.0
-pandas==2.2.2
-scikit-learn==1.5.2
-scipy==1.13.1
+# Core dependencies with specific versions for Windows (using pre-compiled wheels)
+numpy==1.24.4
+matplotlib==3.7.5
+pandas==2.0.3
+scikit-learn==1.3.2
+scipy==1.11.4
 
 # Image processing - Using Wand for all image operations
 wand==0.6.13
 opencv-python-headless==4.9.0.80
 
-# PyTorch ecosystem (CPU-only for Windows)
-# Using --no-deps to prevent Pillow installation
-torch==2.2.1+cpu --no-deps
-torchvision==0.17.1+cpu --no-deps
-torchaudio==2.2.1+cpu --no-deps
-pytorch-lightning==2.2.4
+# PyTorch ecosystem (CPU-only for Windows) - using stable versions with pre-compiled wheels
+torch==2.1.2
+torchvision==0.16.2
+torchaudio==2.1.2
+pytorch-lightning==2.1.4
 
 # GUI Framework - PySide6 for modern interface
 PySide6==6.7.3

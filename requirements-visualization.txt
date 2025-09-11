@@ -27,8 +27,8 @@ ipywidgets>=8.0.0
 widgetsnbextension>=4.0.0
 
 # 3D visualization
-mayavi>=4.7.0
-vtk>=9.0.0
+# mayavi>=4.7.0  # Temporarily disabled due to Python 3.13 compatibility issues
+# vtk>=9.0.0      # Temporarily disabled due to Python 3.13 compatibility issues
 
 # Network visualization
 networkx>=3.0.0

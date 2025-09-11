@@ -16,10 +16,13 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Tuple
 import packaging.version
 
-# Try to import tkinter for GUI, fall back to console if not available
+# Try to import PySide6 for GUI, fall back to console if not available
 try:
-    import tkinter as tk
-    from tkinter import ttk, messagebox, scrolledtext
+    from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
+                                   QPushButton, QProgressBar, QTextEdit, 
+                                   QDialogButtonBox, QMessageBox)
+    from PySide6.QtCore import QThread, Signal, QTimer
+    from PySide6.QtGui import QFont
     GUI_AVAILABLE = True
 except ImportError:
     GUI_AVAILABLE = False
@@ -126,131 +129,123 @@ class UpdateDialog:
     
     def _show_gui_dialog(self, force_check: bool = False) -> None:
         """Show GUI dialog for updates."""
-        dialog = tk.Toplevel(self.parent) if self.parent else tk.Tk()
-        dialog.title("Update Checker - NeuralNetworkApp")
-        dialog.geometry("600x500")
-        dialog.resizable(True, True)
+        dialog = QDialog(self.parent)
+        dialog.setWindowTitle("Update Checker - NeuralNetworkApp")
+        dialog.setModal(True)
+        dialog.resize(600, 500)
         
-        # Center the dialog
-        dialog.transient(self.parent) if self.parent else None
-        dialog.grab_set() if self.parent else None
-        
-        # Main frame
-        main_frame = ttk.Frame(dialog, padding="10")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        # Configure grid weights
-        dialog.columnconfigure(0, weight=1)
-        dialog.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(1, weight=1)
+        # Main layout
+        layout = QVBoxLayout(dialog)
         
         # Title
-        title_label = ttk.Label(main_frame, text="NeuralNetworkApp Update Checker", 
-                               font=('Arial', 14, 'bold'))
-        title_label.grid(row=0, column=0, columnspan=2, pady=(0, 10))
+        title_label = QLabel("NeuralNetworkApp Update Checker")
+        title_font = QFont()
+        title_font.setBold(True)
+        title_font.setPointSize(14)
+        title_label.setFont(title_font)
+        layout.addWidget(title_label)
         
         # Current version
-        ttk.Label(main_frame, text="Current Version:").grid(row=1, column=0, sticky=tk.W, pady=2)
-        current_version_label = ttk.Label(main_frame, text=self.update_checker.current_version)
-        current_version_label.grid(row=1, column=1, sticky=tk.W, pady=2)
+        version_layout = QHBoxLayout()
+        version_layout.addWidget(QLabel("Current Version:"))
+        current_version_label = QLabel(self.update_checker.current_version)
+        version_layout.addWidget(current_version_label)
+        version_layout.addStretch()
+        layout.addLayout(version_layout)
         
         # Status
-        ttk.Label(main_frame, text="Status:").grid(row=2, column=0, sticky=tk.W, pady=2)
-        status_label = ttk.Label(main_frame, text="Checking for updates...")
-        status_label.grid(row=2, column=1, sticky=tk.W, pady=2)
+        status_layout = QHBoxLayout()
+        status_layout.addWidget(QLabel("Status:"))
+        self.status_label = QLabel("Checking for updates...")
+        status_layout.addWidget(self.status_label)
+        status_layout.addStretch()
+        layout.addLayout(status_layout)
         
         # Progress bar
-        progress = ttk.Progressbar(main_frame, mode='indeterminate')
-        progress.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=10)
-        progress.start()
+        self.progress = QProgressBar()
+        self.progress.setRange(0, 0)  # Indeterminate progress
+        layout.addWidget(self.progress)
         
-        # Update info frame (initially hidden)
-        info_frame = ttk.Frame(main_frame)
-        info_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=10)
-        main_frame.rowconfigure(4, weight=1)
+        # Release notes
+        layout.addWidget(QLabel("Release Notes:"))
+        self.release_notes = QTextEdit()
+        self.release_notes.setReadOnly(True)
+        layout.addWidget(self.release_notes)
         
-        # Release notes text area
-        ttk.Label(info_frame, text="Release Notes:").grid(row=0, column=0, sticky=tk.W, pady=2)
-        release_notes = scrolledtext.ScrolledText(info_frame, height=10, width=60)
-        release_notes.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
-        info_frame.columnconfigure(0, weight=1)
-        info_frame.rowconfigure(1, weight=1)
+        # Buttons
+        button_layout = QHBoxLayout()
+        self.download_button = QPushButton("Download Update")
+        self.download_button.clicked.connect(lambda: self._open_download_page(dialog))
+        self.download_button.setEnabled(False)
         
-        # Buttons frame
-        buttons_frame = ttk.Frame(main_frame)
-        buttons_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        check_again_button = QPushButton("Check Again")
+        check_again_button.clicked.connect(lambda: self._refresh_updates())
         
-        download_button = ttk.Button(buttons_frame, text="Download Update", 
-                                   command=lambda: self._open_download_page(dialog))
-        download_button.pack(side=tk.LEFT, padx=5)
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(dialog.accept)
         
-        check_again_button = ttk.Button(buttons_frame, text="Check Again", 
-                                      command=lambda: self._refresh_updates(dialog, status_label, 
-                                                                         progress, info_frame, release_notes))
-        check_again_button.pack(side=tk.LEFT, padx=5)
-        
-        close_button = ttk.Button(buttons_frame, text="Close", 
-                                command=dialog.destroy)
-        close_button.pack(side=tk.LEFT, padx=5)
+        button_layout.addWidget(self.download_button)
+        button_layout.addWidget(check_again_button)
+        button_layout.addWidget(close_button)
+        layout.addLayout(button_layout)
         
         # Check for updates in a separate thread
         def check_updates_thread():
             update_info = self.update_checker.check_for_updates(force_check)
             
             # Update GUI in main thread
-            dialog.after(0, lambda: self._update_gui_with_results(dialog, status_label, progress, 
-                                                               info_frame, release_notes, download_button, 
-                                                               update_info))
+            QTimer.singleShot(0, lambda: self._update_gui_with_results(update_info))
         
         threading.Thread(target=check_updates_thread, daemon=True).start()
         
-        # Run the dialog
-        dialog.mainloop()
+        # Show the dialog
+        dialog.exec_()
     
-    def _update_gui_with_results(self, dialog, status_label, progress, info_frame, 
-                               release_notes, download_button, update_info):
+    def _update_gui_with_results(self, update_info):
         """Update the GUI with update check results."""
-        progress.stop()
-        progress.grid_remove()
+        self.progress.setRange(0, 100)  # Stop indeterminate progress
+        self.progress.setValue(100)
         
         if not update_info:
-            status_label.config(text="Failed to check for updates", foreground="red")
-            release_notes.insert(tk.END, "Unable to connect to the update server.\nPlease check your internet connection and try again.")
-            download_button.config(state='disabled')
+            self.status_label.setText("Failed to check for updates")
+            self.status_label.setStyleSheet("color: red;")
+            self.release_notes.setText("Unable to connect to the update server.\nPlease check your internet connection and try again.")
+            self.download_button.setEnabled(False)
             return
         
         latest_version = update_info.get('version', 'Unknown')
         is_newer = update_info.get('is_newer', False)
         
         if is_newer:
-            status_label.config(text=f"Update available: {latest_version}", foreground="green")
-            release_notes.insert(tk.END, f"Version {latest_version} - {update_info.get('name', '')}\n")
-            release_notes.insert(tk.END, "="*50 + "\n\n")
-            release_notes.insert(tk.END, update_info.get('body', 'No release notes available.'))
-            download_button.config(state='normal')
+            self.status_label.setText(f"Update available: {latest_version}")
+            self.status_label.setStyleSheet("color: green;")
+            release_text = f"Version {latest_version} - {update_info.get('name', '')}\n"
+            release_text += "="*50 + "\n\n"
+            release_text += update_info.get('body', 'No release notes available.')
+            self.release_notes.setText(release_text)
+            self.download_button.setEnabled(True)
         else:
-            status_label.config(text=f"You're using the latest version: {latest_version}", foreground="blue")
-            release_notes.insert(tk.END, f"You're already using the latest version ({latest_version}).\n\n")
+            self.status_label.setText(f"You're using the latest version: {latest_version}")
+            self.status_label.setStyleSheet("color: blue;")
+            release_text = f"You're already using the latest version ({latest_version}).\n\n"
             if update_info.get('body'):
-                release_notes.insert(tk.END, "Latest release notes:\n")
-                release_notes.insert(tk.END, "="*50 + "\n\n")
-                release_notes.insert(tk.END, update_info.get('body', ''))
-            download_button.config(state='disabled')
-        
-        release_notes.config(state='disabled')
+                release_text += "Latest release notes:\n"
+                release_text += "="*50 + "\n\n"
+                release_text += update_info.get('body', '')
+            self.release_notes.setText(release_text)
+            self.download_button.setEnabled(False)
     
-    def _refresh_updates(self, dialog, status_label, progress, info_frame, release_notes):
+    def _refresh_updates(self):
         """Refresh update information."""
-        status_label.config(text="Checking for updates...")
-        release_notes.config(state='normal')
-        release_notes.delete(1.0, tk.END)
-        progress.grid()
-        progress.start()
+        self.status_label.setText("Checking for updates...")
+        self.status_label.setStyleSheet("")
+        self.release_notes.clear()
+        self.progress.setRange(0, 0)  # Indeterminate progress
+        self.download_button.setEnabled(False)
         
         def check_updates_thread():
             update_info = self.update_checker.check_for_updates(force_check=True)
-            dialog.after(0, lambda: self._update_gui_with_results(dialog, status_label, progress, 
-                                                               info_frame, release_notes, None, update_info))
+            QTimer.singleShot(0, lambda: self._update_gui_with_results(update_info))
         
         threading.Thread(target=check_updates_thread, daemon=True).start()
     
