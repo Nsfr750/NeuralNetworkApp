@@ -139,6 +139,10 @@ class AppMenuBar(QMenuBar):
         # View Logs Action
         view_logs_action = tools_menu.addAction(get_text('menu.view_logs', 'View Logs'))
         view_logs_action.triggered.connect(self.view_logs)
+        
+        # Check for Updates Action
+        check_updates_action = tools_menu.addAction(get_text('menu.check_updates', 'Check for Updates'))
+        check_updates_action.triggered.connect(self.check_for_updates)
 
         tools_menu.addSeparator()
         
@@ -266,4 +270,17 @@ class AppMenuBar(QMenuBar):
                 self.parent,
                 "Error",
                 f"Failed to open log viewer: {str(e)}"
+            )
+    
+    def check_for_updates(self):
+        """Check for application updates."""
+        try:
+            # Import here to avoid circular imports
+            from src.utils.updates import check_for_updates as show_update_dialog
+            show_update_dialog(self.parent)
+        except Exception as e:
+            QMessageBox.critical(
+                self.parent,
+                "Update Check Error",
+                f"Failed to check for updates: {str(e)}"
             )

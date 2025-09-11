@@ -60,6 +60,7 @@ from src.neuralnetworkapp.utils import (
     save_model, load_model, plot_training_history,
     save_config, load_config, count_parameters, set_seed
 )
+from src.utils.updates import check_for_updates, is_update_available
 
 # Set random seed for reproducibility
 set_seed(42)
@@ -200,6 +201,9 @@ class NeuralNetworkApp(QMainWindow):
             self.init_ui()
             self.setup_connections()
             logger.info("UI and connections initialized successfully")
+            
+            # Check for updates after a short delay
+            QTimer.singleShot(2000, self.check_for_updates)
         except Exception as e:
             logger.critical("Failed to initialize application", exc_info=True)
             raise
@@ -1039,6 +1043,24 @@ class NeuralNetworkApp(QMainWindow):
             
         except Exception as e:
             QMessageBox.critical(self, 'Error', f'Failed to load model: {str(e)}')
+    
+    def check_for_updates(self):
+        """Check for application updates in a separate thread."""
+        def check_updates_thread():
+            try:
+                logger.info("Checking for application updates...")
+                if is_update_available():
+                    # Show update dialog in the main thread
+                    QTimer.singleShot(0, lambda: check_for_updates(self))
+                else:
+                    logger.info("No updates available")
+            except Exception as e:
+                logger.error(f"Failed to check for updates: {str(e)}", exc_info=True)
+        
+        # Start update check in a separate thread
+        import threading
+        thread = threading.Thread(target=check_updates_thread, daemon=True)
+        thread.start()
     
     def closeEvent(self, event):
         try:
