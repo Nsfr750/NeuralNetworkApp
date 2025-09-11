@@ -35,9 +35,9 @@ def get_data_dirs():
         project_root / "assets",
         project_root / "cli",
         project_root / "docs",
-        project_root / "data",
-        project_root / "checkpoints",
-        project_root / "logs"
+        project_root / "logs",
+        project_root / "utils",
+        project_root / "src",
     ]
 
 def get_icon_path():
