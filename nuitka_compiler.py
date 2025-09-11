@@ -127,7 +127,15 @@ def get_nuitka_command(compilation_mode="standalone", debug=False):
         "--lto=yes",
         "--plugin-enable=pyside6",
         "--assume-yes-for-downloads",
-        "--no-pyi-file"
+        "--no-pyi-file",
+        # Handle cffi compatibility
+        "--include-package=cffi",
+        "--include-package=cffi.api",
+        # Explicitly configure Torch JIT
+        "--module-parameter=torch-disable-jit=yes",
+        # Explicitly configure Numba JIT
+        "--module-parameter=numba-disable-jit=yes",
+        "--noinclude-numba-mode=nofollow"
     ])
     
     # Add icon if available
