@@ -36,7 +36,7 @@ class AboutDialog(QDialog):
         <p style='text-align: center;'>Version: {__version__}</p>
         <p style='text-align: center;'>© Copyright 2025 Nsfr750 - All rights reserved</p>
         <p style='text-align: justify;'>A application for creating and managing neural networks.</p>
-        <p style='text-align: center;'>GitHub: <a href='https://github.com/Nsfr750/NeuralNetworkApp'>Nsfr750/NeuralNetworkApp</a></p>
+        <p style='text-align: center;'>GitHub: <a href='https://github.com/Nsfr750/NeuralNetworkApp'>Neural Network Creator</a></p>
         """
         
         text_browser = QTextBrowser()

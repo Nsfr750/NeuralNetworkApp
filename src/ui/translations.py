@@ -117,7 +117,7 @@ TRANSLATIONS = {
         },
         "about": {
             "title": "About Neural Network Creator",
-            "description": "A PySide6 application for creating and training neural networks with a modern GUI interface.",
+            "description": "A application for creating and training neural networks with a modern GUI interface.",
             "version": "Version: {version}",
             "author": "© {year} Nsfr750 - All rights reserved",
             "license": "License: GPLv3",
@@ -244,7 +244,7 @@ TRANSLATIONS = {
         },
         "about": {
             "title": "Informazioni su Neural Network Creator",
-            "description": "Un'applicazione PySide6 per creare e addestrare reti neurali con un'interfaccia grafica moderna.",
+            "description": "Un'applicazione per creare e addestrare reti neurali con un'interfaccia grafica moderna.",
             "version": "Versione: {version}",
             "author": "© {year} Nsfr750 - Tutti i diritti riservati",
             "license": "Licenza: GPLv3",

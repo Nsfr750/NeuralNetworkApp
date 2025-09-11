@@ -182,3 +182,4 @@ cython_debug/
 info
 /data/CSV
 nuitka_compiler.py
+/WORK

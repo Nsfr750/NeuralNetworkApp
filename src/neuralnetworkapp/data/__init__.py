@@ -46,7 +46,23 @@ class TabularDataset(Dataset):
             y = self.y[idx]
             if self.target_transform:
                 y = self.target_transform(y)
+            
+            # Convert to tensor if not already
+            if not isinstance(x, torch.Tensor):
+                x = torch.tensor(x, dtype=torch.float32)
+            if not isinstance(y, torch.Tensor):
+                y = torch.tensor(y, dtype=torch.long)
+            
+            # Validate label for classification tasks
+            if y.dtype == torch.long:
+                if y < 0:
+                    raise ValueError(f"Invalid label {y.item()}: labels must be non-negative for cross-entropy loss")
+            
             return x, y
+        
+        # Convert to tensor if not already
+        if not isinstance(x, torch.Tensor):
+            x = torch.tensor(x, dtype=torch.float32)
         return x
 
 
@@ -86,6 +102,14 @@ def load_tabular_data(
         X = df.drop(columns=[target_column]).values
         y = df[target_column].values
         
+        # Validate labels for classification
+        if np.issubdtype(y.dtype, np.number):
+            negative_labels = y[y < 0]
+            if len(negative_labels) > 0:
+                raise ValueError(f"Dataset contains {len(negative_labels)} negative labels (e.g., {negative_labels[0]}). "
+                               f"Labels must be non-negative for classification. "
+                               f"Please check your dataset and ensure labels are valid class indices.")
+        
         # Encode target if it's not numeric
         if not np.issubdtype(y.dtype, np.number):
             le = LabelEncoder()
@@ -93,6 +117,11 @@ def load_tabular_data(
             num_classes = len(le.classes_)
         else:
             num_classes = len(np.unique(y))
+            
+        # Validate that we have a reasonable number of classes
+        if num_classes <= 1:
+            raise ValueError(f"Dataset has only {num_classes} class(es). "
+                           f"Classification requires at least 2 classes.")
     else:
         X = df.values
         y = None
@@ -109,7 +138,7 @@ def load_tabular_data(
         X_train_val, y_train_val, 
         test_size=val_size_adjusted, 
         random_state=random_state,
-        stratize=y_train_val if y_train_val is not None else None
+        stratify=y_train_val if y_train_val is not None else None
     )
     
     # Create feature scalers
