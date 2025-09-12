@@ -127,12 +127,13 @@ def get_nuitka_command(compilation_mode="standalone", debug=False, console=False
         "--jobs=8",
         "--lto=yes",
         "--plugin-enable=pyside6",
-        "--assume-yes-for-downloads",
-        "--no-pyi-file",
-        # Handle cffi compatibility - use valid plugins only
-        "--plugin-enable=numpy",
         "--plugin-enable=pylint-warnings",
-        # Exclude problematic cffi modules that cause SyntaxErrors
+        "--assume-yes-for-downloads",
+        "--no-pyi-file"
+    ])
+    
+    # Exclude problematic cffi modules that cause SyntaxErrors
+    cmd.extend([
         "--nofollow-import-to=cffi",
         "--nofollow-import-to=cffi.api",
         "--nofollow-import-to=cffi.backend_ctypes",
