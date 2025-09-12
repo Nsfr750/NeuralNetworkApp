@@ -70,13 +70,14 @@ def get_app_config():
         "output_filename": "NeuralNetwork"
     }
 
-def get_nuitka_command(compilation_mode="standalone", debug=False):
+def get_nuitka_command(compilation_mode="standalone", debug=False, console=False):
     """
     Build the Nuitka compilation command with enhanced options.
     
     Args:
         compilation_mode (str): "standalone" or "onefile"
         debug (bool): Whether to include debug information
+        console (bool): Whether to keep console enabled for debugging
     
     Returns:
         list: Nuitka command as a list of arguments
@@ -128,14 +129,26 @@ def get_nuitka_command(compilation_mode="standalone", debug=False):
         "--plugin-enable=pyside6",
         "--assume-yes-for-downloads",
         "--no-pyi-file",
-        # Handle cffi compatibility
-        "--include-package=cffi",
-        "--include-package=cffi.api",
+        # Handle cffi compatibility - use valid plugins only
+        "--plugin-enable=numpy",
+        "--plugin-enable=pylint-warnings",
+        # Exclude problematic cffi modules that cause SyntaxErrors
+        "--nofollow-import-to=cffi",
+        "--nofollow-import-to=cffi.api",
+        "--nofollow-import-to=cffi.backend_ctypes",
+        "--nofollow-import-to=cffi.commontypes",
+        "--nofollow-import-to=cffi.cparser",
+        "--nofollow-import-to=cffi.vengine_cpy",
+        "--nofollow-import-to=cffi.vengine_gen",
+        "--nofollow-import-to=cffi.setuptools_ext",
         # Explicitly configure Torch JIT
         "--module-parameter=torch-disable-jit=yes",
         # Explicitly configure Numba JIT
         "--module-parameter=numba-disable-jit=yes",
-        "--noinclude-numba-mode=nofollow"
+        "--noinclude-numba-mode=nofollow",
+        # Additional compatibility flags
+        "--python-flag=no_asserts",
+        "--python-flag=no_docstrings"
     ])
     
     # Add icon if available
@@ -175,10 +188,11 @@ def get_nuitka_command(compilation_mode="standalone", debug=False):
     
     # Add platform-specific options
     if platform.system() == "Windows":
-        cmd.extend([
-            "--disable-console" if compilation_mode == "standalone" else ""
-        ])
-        cmd = [x for x in cmd if x]  # Remove empty strings
+        if not console:  # Only disable console if not explicitly requested
+            cmd.extend([
+                "--disable-console" if compilation_mode == "standalone" else ""
+            ])
+            cmd = [x for x in cmd if x]  # Remove empty strings
     
     # Add the main script
     cmd.append(str(main_script))
@@ -258,13 +272,101 @@ def setup_logging():
     
     return logging.getLogger(__name__)
 
-def compile_project(mode="standalone", debug=False):
+def get_alternative_nuitka_command(compilation_mode="standalone", debug=False, console=False):
+    """
+    Get alternative Nuitka command with more conservative options for problematic dependencies.
+    
+    Args:
+        compilation_mode (str): "standalone" or "onefile"
+        debug (bool): Whether to include debug information
+    
+    Returns:
+        list: Alternative Nuitka command as a list of arguments
+    """
+    project_root = get_project_root()
+    main_script = project_root / "main.py"
+    output_dir = get_output_dir()
+    icon_path = get_icon_path()
+    config = get_app_config()
+    
+    if not main_script.exists():
+        raise FileNotFoundError(f"Main script not found: {main_script}")
+    
+    # More conservative command for problematic dependencies
+    cmd = [
+        get_python_executable(),
+        "-m",
+        "nuitka",
+        "--standalone" if compilation_mode == "standalone" else "--onefile",
+        "--follow-import-mode=none",  # Don't follow imports automatically
+        "--include-package=src",
+        "--include-package=src.neuralnetworkapp",
+        "--include-package=src.network_builder",
+        "--include-package=src.ui",
+        "--include-package=src.utils",
+        "--windows-console-mode=disable",
+        f"--output-dir={output_dir}",
+        f"--output-filename={config['output_filename']}_fallback",
+        f"--company-name={config['company']}",
+        f"--product-name={config['name']}",
+        f"--file-version={config['version']}.0",
+        f"--product-version={config['version']}.0",
+        f"--file-description={config['description']}",
+        f"--copyright={config['copyright']}",
+        "--remove-output",
+        "--jobs=4",  # Use fewer jobs for stability
+        "--lto=no",  # Disable LTO for compatibility
+        "--plugin-enable=pyside6",
+        "--assume-yes-for-downloads",
+        "--no-pyi-file",
+        # Exclude all problematic modules
+        "--nofollow-import-to=cffi",
+        "--nofollow-import-to=setuptools",
+        "--nofollow-import-to=pkg_resources",
+        "--nofollow-import-to=wheel",
+        "--nofollow-import-to=distutils",
+        # Disable JIT compilers
+        "--module-parameter=torch-disable-jit=yes",
+        "--module-parameter=numba-disable-jit=yes",
+        "--noinclude-numba-mode=nofollow",
+        # Conservative Python flags
+        "--python-flag=no_site",
+        "--python-flag=no_warnings",
+        "--python-flag=no_asserts"
+    ]
+    
+    # Add icon if available
+    if icon_path:
+        cmd.append(f"--windows-icon-from-ico={icon_path}")
+    
+    # Add only essential data directories
+    essential_data_dirs = [project_root / "assets"]
+    for data_dir in essential_data_dirs:
+        if data_dir.exists():
+            cmd.append(f"--include-data-dir={data_dir}={data_dir.name}")
+    
+    # Add debug flags if needed
+    if debug:
+        cmd.extend(["--debug", "--unstripped"])
+    
+    # Only disable console if not explicitly requested
+    if not console and platform.system() == "Windows":
+        cmd.extend(["--disable-console" if compilation_mode == "standalone" else ""])
+        cmd = [x for x in cmd if x]  # Remove empty strings
+    
+    # Add the main script
+    cmd.append(str(main_script))
+    
+    return cmd
+
+def compile_project(mode="standalone", debug=False, console=False):
     """
     Compile the project using Nuitka with enhanced error handling and real-time progress.
     
     Args:
         mode (str): Compilation mode ("standalone" or "onefile")
         debug (bool): Whether to include debug information
+        console (bool): Whether to keep console enabled for debugging
     
     Returns:
         bool: True if compilation succeeded, False otherwise
@@ -306,7 +408,7 @@ def compile_project(mode="standalone", debug=False):
         logger.info(f"Output directory: {output_dir}")
         
         # Get compilation command
-        cmd = get_nuitka_command(mode, debug)
+        cmd = get_nuitka_command(mode, debug, console)
         print(f"\n🔨 Compilation command prepared")
         logger.info("Compilation command:")
         logger.info(" ".join(cmd))
@@ -394,6 +496,85 @@ def compile_project(mode="standalone", debug=False):
                 print(f"⏱️  Total time: {elapsed_time:.2f} seconds")
                 print(f"📁 Output directory: {output_dir}")
                 print(f"📊 Lines processed: {line_count}")
+            else:
+                # Primary compilation failed, try fallback approach
+                print(f"\n❌ Primary compilation failed with return code: {return_code}")
+                print(f"🔄 Attempting fallback compilation with conservative options...")
+                logger.error(f"Primary compilation failed with return code: {return_code}")
+                logger.info("Attempting fallback compilation with conservative options...")
+                
+                # Get alternative command
+                fallback_cmd = get_alternative_nuitka_command(mode, debug, console)
+                print(f"🔨 Fallback compilation command prepared")
+                logger.info("Fallback compilation command:")
+                logger.info(" ".join(fallback_cmd))
+                logger.info("-" * 50)
+                
+                # Run fallback compilation
+                print("\n⏳ Starting fallback compilation...")
+                logger.info("Starting fallback compilation...")
+                
+                try:
+                    fallback_process = subprocess.Popen(
+                        fallback_cmd, 
+                        cwd=get_project_root(),
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.STDOUT,
+                        universal_newlines=True,
+                        bufsize=1
+                    )
+                    
+                    fallback_line_count = 0
+                    fallback_start_time = time.time()
+                    
+                    # Read fallback output line by line
+                    for line in iter(fallback_process.stdout.readline, ''):
+                        line = line.strip()
+                        if line:
+                            fallback_line_count += 1
+                            
+                            # Show important lines
+                            line_lower = line.lower()
+                            if any(keyword in line_lower for keyword in ['error', 'warning', 'failed', 'success', 'completed']):
+                                if 'error' in line_lower or 'failed' in line_lower:
+                                    print(f"❌ {line}")
+                                elif 'success' in line_lower or 'completed' in line_lower:
+                                    print(f"✅ {line}")
+                                else:
+                                    print(f"⚠️  {line}")
+                            
+                            # Log all lines
+                            logger.info(f"  FALLBACK: {line}")
+                    
+                    # Wait for fallback process to complete
+                    fallback_return_code = fallback_process.wait()
+                    
+                    if fallback_return_code == 0:
+                        fallback_elapsed_time = time.time() - fallback_start_time
+                        total_elapsed_time = time.time() - start_time
+                        print(f"\n{'='*60}")
+                        print(f"✅ Fallback compilation completed successfully!")
+                        print(f"⏱️  Fallback time: {fallback_elapsed_time:.2f} seconds")
+                        print(f"⏱️  Total time: {total_elapsed_time:.2f} seconds")
+                        print(f"📁 Output directory: {output_dir}")
+                        print(f"📊 Fallback lines processed: {fallback_line_count}")
+                        print(f"💡 Note: Using fallback executable with name suffix '_fallback'")
+                        return_code = 0  # Mark as successful
+                    else:
+                        print(f"\n❌ Fallback compilation also failed with return code: {fallback_return_code}")
+                        logger.error(f"Fallback compilation failed with return code: {fallback_return_code}")
+                        
+                except Exception as fallback_error:
+                    print(f"\n❌ Fallback compilation encountered an error: {fallback_error}")
+                    logger.error(f"Fallback compilation error: {fallback_error}")
+                    
+            if return_code == 0:
+                elapsed_time = time.time() - start_time
+                print(f"\n{'='*60}")
+                print(f"✅ Compilation completed successfully!")
+                print(f"⏱️  Total time: {elapsed_time:.2f} seconds")
+                print(f"📁 Output directory: {output_dir}")
+                print(f"📊 Lines processed: {line_count}")
                 
                 # List the generated files
                 if output_dir.exists():
@@ -452,34 +633,18 @@ def main():
     """Main function."""
     import argparse
     
-    parser = argparse.ArgumentParser(
-        description="Compile Neural Network App with Nuitka (Safe Mode)",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python nuitka_compiler.py                    # Compile standalone (default)
-  python nuitka_compiler.py --mode onefile     # Compile as single executable
-  python nuitka_compiler.py --debug            # Compile with debug information
-        """
-    )
-    
-    parser.add_argument(
-        "--mode",
-        choices=["standalone", "onefile"],
-        default="standalone",
-        help="Compilation mode (default: standalone)"
-    )
-    
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Include debug information"
-    )
+    parser = argparse.ArgumentParser(description="Compile Neural Network App with Nuitka")
+    parser.add_argument("--mode", choices=["standalone", "onefile"], default="standalone",
+                       help="Compilation mode")
+    parser.add_argument("--debug", action="store_true",
+                       help="Enable debug compilation")
+    parser.add_argument("--console", action="store_true",
+                       help="Keep console enabled to see runtime errors")
     
     args = parser.parse_args()
     
     # Compile the project
-    success = compile_project(args.mode, args.debug)
+    success = compile_project(args.mode, args.debug, args.console)
     sys.exit(0 if success else 1)
 
 if __name__ == "__main__":
