@@ -33,7 +33,7 @@ The Neural Network Creator is designed with security as a fundamental principle.
 
 ### Application Components
 
-```
+```text
 Neural Network Creator
 ├── GUI Layer (PySide6)
 │   ├── Input Validation
@@ -68,11 +68,13 @@ Neural Network Creator
 ### Dataset Security
 
 #### Trusted Sources
+
 - Only use datasets from reputable sources
 - Verify dataset integrity using checksums when available
 - Be cautious with datasets containing personal or sensitive information
 
 #### Data Validation
+
 ```python
 # Example of secure data loading
 def load_dataset_securely(file_path):
@@ -95,6 +97,7 @@ def load_dataset_securely(file_path):
 ```
 
 #### Sensitive Data Handling
+
 - Avoid datasets with PII (Personally Identifiable Information)
 - Use data anonymization techniques when necessary
 - Implement proper data retention policies
@@ -102,6 +105,7 @@ def load_dataset_securely(file_path):
 ### Temporary File Management
 
 #### Secure Temporary File Creation
+
 ```python
 import tempfile
 import os
@@ -125,6 +129,7 @@ def create_secure_temp_file(prefix="nna_", suffix=".tmp"):
 ```
 
 #### Cleanup Procedures
+
 - Automatic cleanup of temporary files after processing
 - Manual cleanup option for users
 - Logging of temporary file creation and deletion
@@ -134,6 +139,7 @@ def create_secure_temp_file(prefix="nna_", suffix=".tmp"):
 ### Model File Protection
 
 #### Secure Model Serialization
+
 ```python
 import torch
 import hashlib
@@ -160,6 +166,7 @@ def save_model_securely(model, file_path):
 ```
 
 #### Model Integrity Verification
+
 ```python
 def verify_model_integrity(model_path):
     """Verify model file integrity"""
@@ -185,11 +192,13 @@ def verify_model_integrity(model_path):
 ### Model Privacy Considerations
 
 #### Membership Inference Risks
+
 - Be aware that trained models may leak information about training data
 - Consider using differential privacy techniques for sensitive datasets
 - Implement model anonymization when sharing models
 
 #### Model Extraction Protection
+
 - Limit API access to model internals
 - Implement rate limiting for model predictions
 - Consider watermarking techniques for model ownership
@@ -199,6 +208,7 @@ def verify_model_integrity(model_path):
 ### GUI Security
 
 #### Input Validation
+
 ```python
 from PySide6.QtWidgets import QLineEdit, QFileDialog
 
@@ -239,6 +249,7 @@ class SecureInputValidator:
 ```
 
 #### Secure File Dialogs
+
 ```python
 def get_secure_file_dialog(parent, title, file_filter, directory=None):
     """Create secure file dialog"""
@@ -259,6 +270,7 @@ def get_secure_file_dialog(parent, title, file_filter, directory=None):
 ### Network Security
 
 #### Update Checking
+
 ```python
 import requests
 import ssl
@@ -292,6 +304,7 @@ def check_updates_securely():
 ### Memory Security
 
 #### Secure Memory Management
+
 ```python
 import gc
 import sys
@@ -318,6 +331,7 @@ def secure_memory_cleanup():
 ### Code Security
 
 #### Input Validation
+
 ```python
 def validate_user_input(input_data, expected_type, constraints=None):
     """Validate user input with type checking and constraints"""
@@ -339,6 +353,7 @@ def validate_user_input(input_data, expected_type, constraints=None):
 ```
 
 #### Error Handling
+
 ```python
 import logging
 
@@ -363,6 +378,7 @@ def secure_function_wrapper(func):
 ### Dependency Management
 
 #### Secure Dependencies
+
 ```bash
 # Regular security audit of dependencies
 pip-audit --requirement requirements.txt --fix
@@ -375,6 +391,7 @@ pip list --outdated --format=freeze
 ```
 
 #### Dependency Validation
+
 ```python
 import importlib
 import pkg_resources
@@ -402,17 +419,20 @@ def validate_dependencies():
 ### Best Practices for Users
 
 #### Data Security
+
 1. **Source Verification**: Only download datasets from trusted sources
 2. **Data Backup**: Maintain regular backups of important datasets and models
 3. **File Permissions**: Set appropriate file permissions for sensitive files
 4. **Data Encryption**: Consider encrypting sensitive datasets at rest
 
 #### Model Security
+
 1. **Model Sharing**: Be cautious when sharing models that may contain sensitive training data
 2. **Version Control**: Keep track of model versions and their training data
 3. **Access Control**: Limit access to trained models based on sensitivity
 
 #### Application Usage
+
 1. **Regular Updates**: Keep the application updated to the latest version
 2. **Secure Environment**: Run the application in a secure computing environment
 3. **Resource Monitoring**: Monitor system resources during training
@@ -420,6 +440,7 @@ def validate_dependencies():
 ### Security Checklist
 
 #### Before Training
+
 - [ ] Dataset source is verified and trusted
 - [ ] Dataset does not contain sensitive PII
 - [ ] File permissions are set correctly
@@ -427,12 +448,14 @@ def validate_dependencies():
 - [ ] System has adequate security protections
 
 #### During Training
+
 - [ ] Monitor system resources
 - [ ] Watch for unusual behavior
 - [ ] Keep logs of training activities
 - [ ] Regular backups of model checkpoints
 
 #### After Training
+
 - [ ] Verify model integrity
 - [ ] Clean up temporary files
 - [ ] Set appropriate permissions on model files
@@ -443,6 +466,7 @@ def validate_dependencies():
 ### Potential Threats
 
 #### Data-Related Threats
+
 | Threat | Likelihood | Impact | Mitigation |
 |--------|------------|---------|------------|
 | Data poisoning | Medium | High | Dataset validation, source verification |
@@ -450,6 +474,7 @@ def validate_dependencies():
 | Unauthorized data access | Low | Medium | File permissions, access controls |
 
 #### Model-Related Threats
+
 | Threat | Likelihood | Impact | Mitigation |
 |--------|------------|---------|------------|
 | Model theft | Low | Medium | File permissions, access controls |
@@ -457,6 +482,7 @@ def validate_dependencies():
 | Adversarial attacks | Medium | Medium | Input validation, robustness testing |
 
 #### Application-Related Threats
+
 | Threat | Likelihood | Impact | Mitigation |
 |--------|------------|---------|------------|
 | Code injection | Low | High | Input validation, sandboxing |
@@ -466,16 +492,19 @@ def validate_dependencies():
 ### Risk Assessment
 
 #### High Risk Areas
+
 1. **Dataset Loading**: Loading untrusted datasets can lead to code execution
 2. **Model Serialization**: Insecure model files can contain malicious payloads
 3. **File Operations**: Path traversal and unauthorized file access
 
 #### Medium Risk Areas
+
 1. **GUI Input**: Malicious input can cause application crashes
 2. **Network Operations**: Update checking can be intercepted
 3. **Memory Management**: Large datasets can cause memory exhaustion
 
 #### Low Risk Areas
+
 1. **Logging**: Information leakage through logs
 2. **Configuration**: Insecure configuration settings
 3. **Temporary Files**: Sensitive data in temporary files
@@ -485,21 +514,25 @@ def validate_dependencies():
 ### Security Incident Types
 
 #### Critical Incidents
+
 - Remote code execution
 - Data breach exposing sensitive information
 - Malware infection through model files
 
 #### High Incidents
+
 - Privilege escalation
 - Significant data leakage
 - Denial of service affecting application availability
 
 #### Medium Incidents
+
 - Limited data exposure
 - Security configuration issues
 - Vulnerable dependencies
 
 #### Low Incidents
+
 - Minor information disclosure
 - UI security issues
 - Logging problems
@@ -507,18 +540,21 @@ def validate_dependencies():
 ### Response Procedures
 
 #### Immediate Actions
+
 1. **Containment**: Isolate affected systems
 2. **Assessment**: Determine scope and impact
 3. **Documentation**: Record all actions taken
 4. **Notification**: Alert security team and stakeholders
 
 #### Investigation Steps
+
 1. **Evidence Collection**: Gather logs, files, and system state
 2. **Root Cause Analysis**: Determine how the incident occurred
 3. **Impact Assessment**: Evaluate data and system exposure
 4. **Vulnerability Identification**: Find and document security weaknesses
 
 #### Recovery Actions
+
 1. **System Restoration**: Restore from clean backups
 2. **Security Patching**: Apply necessary security updates
 3. **Configuration Review**: Update security configurations
@@ -527,12 +563,14 @@ def validate_dependencies():
 ### Post-Incident Review
 
 #### Lessons Learned
+
 1. **Document Findings**: Create detailed incident report
 2. **Identify Improvements**: Determine security enhancements
 3. **Update Procedures**: Modify security policies and procedures
 4. **Training**: Provide security awareness training
 
 #### Prevention Measures
+
 1. **Security Controls**: Implement additional security measures
 2. **Monitoring**: Enhance security monitoring and alerting
 3. **Testing**: Increase security testing frequency
@@ -543,6 +581,7 @@ def validate_dependencies():
 ### Privacy Compliance
 
 #### Data Protection Principles
+
 1. **Lawfulness**: Process data fairly and transparently
 2. **Purpose Limitation**: Use data only for specified purposes
 3. **Data Minimization**: Collect only necessary data
@@ -552,6 +591,7 @@ def validate_dependencies():
 7. **Accountability**: Demonstrate compliance with regulations
 
 #### User Rights
+
 1. **Access**: Users can access their data
 2. **Rectification**: Users can correct inaccurate data
 3. **Erasure**: Users can request data deletion
@@ -562,12 +602,14 @@ def validate_dependencies():
 ### License Compliance
 
 #### Open Source Compliance
+
 - **GPLv3 License**: Application is licensed under GPLv3
 - **Dependency Licenses**: All dependencies comply with their respective licenses
 - **Attribution**: Proper attribution for all third-party components
 - **Source Availability**: Source code is available as required by license
 
 #### Export Controls
+
 - **Neural Network Models**: May be subject to export regulations
 - **Encryption**: May involve encryption technologies
 - **Dual-Use**: Technology may have both civilian and military applications
@@ -578,6 +620,7 @@ def validate_dependencies():
 ### Testing Methodologies
 
 #### Static Analysis
+
 ```bash
 # Code security scanning
 bandit -r src/ -f json -o bandit-report.json
@@ -590,6 +633,7 @@ flake8 src/ --select=E,W,F,C90 --statistics
 ```
 
 #### Dynamic Analysis
+
 ```python
 import unittest
 import subprocess
@@ -628,12 +672,14 @@ class SecurityTestCase(unittest.TestCase):
 #### Penetration Testing
 
 #### Test Areas
+
 1. **Input Validation**: Test for injection attacks
 2. **File Operations**: Test for path traversal and file access
 3. **Network Operations**: Test for network-based attacks
 4. **Memory Management**: Test for buffer overflows and memory leaks
 
 #### Test Tools
+
 - **OWASP ZAP**: Web application security testing
 - **Burp Suite**: Security testing and vulnerability scanning
 - **Metasploit**: Exploitation framework for penetration testing
@@ -642,6 +688,7 @@ class SecurityTestCase(unittest.TestCase):
 ### Continuous Security
 
 #### Automated Security Checks
+
 ```yaml
 # GitHub Actions security workflow
 name: Security Checks
@@ -665,6 +712,7 @@ jobs:
 ```
 
 #### Security Monitoring
+
 - **Dependency Monitoring**: Regular checks for vulnerable dependencies
 - **Code Analysis**: Automated code security scanning
 - **Build Security**: Secure build pipeline and artifact verification
@@ -675,18 +723,21 @@ jobs:
 ### Security Tools
 
 #### Static Analysis Tools
+
 - **Bandit**: Python security linter
 - **Safety**: Python dependency vulnerability scanner
 - **Semgrep**: Static analysis for multiple languages
 - **CodeQL**: Semantic code analysis engine
 
 #### Dynamic Analysis Tools
+
 - **OWASP ZAP**: Web application security scanner
 - **Burp Suite**: Web security testing tool
 - **Metasploit**: Penetration testing framework
 - **Nessus**: Vulnerability scanner
 
 #### Monitoring Tools
+
 - **Wazuh**: Security monitoring platform
 - **OSSEC**: Host-based intrusion detection
 - **Fail2ban**: Intrusion prevention software
@@ -695,12 +746,14 @@ jobs:
 ### Documentation
 
 #### Security Standards
+
 - **OWASP Top 10**: Web application security risks
 - **NIST Cybersecurity Framework**: Security framework
 - **ISO 27001**: Information security management
 - **CIS Controls**: Security best practices
 
 #### Learning Resources
+
 - **OWASP Cheat Sheets**: Security guidance documents
 - **NIST Publications**: Security guidelines and standards
 - **SANS Institute**: Security training and research
@@ -709,12 +762,14 @@ jobs:
 ### Community Resources
 
 #### Security Communities
+
 - **OWASP**: Open Web Application Security Project
 - **SANS**: Security awareness and training
 - **Reddit r/netsec**: Security news and discussions
 - **Security Stack Exchange**: Q&A for security professionals
 
 #### Reporting Security Issues
+
 - **GitHub Security Advisories**: Private vulnerability reporting
 - **HackerOne**: Bug bounty platform
 - **Bugcrowd**: Crowdsourced security testing
