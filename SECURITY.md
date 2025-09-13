@@ -78,9 +78,9 @@ This application handles several types of sensitive data and operations:
 
 If you discover a security vulnerability, please report it responsibly:
 
-**Primary Contact**: [Nsfr750](mailto:nsfr750@yandex.com)
-**GitHub Security**: <https://github.com/Nsfr750/NeuralNetworkApp/security/advisories/new>
-**Discord**: <https://discord.gg/ryqNeuRYjD>
+- **Primary Contact**: [Nsfr750](mailto:nsfr750@yandex.com)
+- **GitHub Security**: <https://github.com/Nsfr750/NeuralNetworkApp/security/advisories/new>
+- **Discord**: <https://discord.gg/ryqNeuRYjD>
 
 ### What to Include
 
