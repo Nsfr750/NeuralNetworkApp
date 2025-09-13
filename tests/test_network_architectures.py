@@ -5,7 +5,7 @@ Tests for model architectures and network builder functionality.
 import unittest
 import torch
 import numpy as np
-from neuralnetworkapp.builderimport NetworkBuilder, LayerType
+from neuralnetworkapp.builder import NetworkBuilder, LayerType
 
 class TestNetworkArchitectures(unittest.TestCase):
     """Test cases for network architectures."""
@@ -75,7 +75,7 @@ class TestNetworkArchitectures(unittest.TestCase):
         json_str = builder.to_json()
         
         # Import from JSON
-        from neuralnetworkapp.builderimport NetworkBuilder as NB
+        from neuralnetworkapp.builder import NetworkBuilder as NB
         new_builder = NB.from_json(json_str)
         
         # Verify the imported model works
